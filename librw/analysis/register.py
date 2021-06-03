@@ -22,6 +22,13 @@ class RegisterAnalysis(object):
         self._init_subregisters()
         self.closure_list = self._init_closure_list()
 
+        # registers who are not actively in used in the function
+        # are safe to be uesd if they are pusehd/popped at start/end of function
+        # initially these are all registers
+        self.clobber_registers = set([
+            "rbx", "rsp", "rbp", "r12", "r13", "r14", "r15",
+            "rax", "rdx", "r10", "r11", "r8", "r9", "rcx", "rdi", "rsi"])
+
         # Caller saved register list, These are registers that cannot be
         # clobbered and therefore are 'used'.
         self.used_regs['ret'] = set([
@@ -122,6 +129,8 @@ class RegisterAnalysis(object):
             ra = RegisterAnalysis()
             ra.analyze_function(function)
             function.analysis[RegisterAnalysis.KEY] = ra.free_regs
+            function.analysis['clobber_registers'] = ra.clobber_registers
+            function.analysis['used_registers'] = ra.used_regs
 
     def analyze_function(self, function):
         change = True
@@ -136,6 +145,9 @@ class RegisterAnalysis(object):
     def analyze_instruction(self, function, instruction_idx):
         current_instruction = function.cache[instruction_idx]
         nexts = function.next_of(instruction_idx)
+
+        self.clobber_registers.difference_update(set(current_instruction.reg_reads()))
+        self.clobber_registers.difference_update(set(current_instruction.reg_writes()))
 
         reguses = self.reg_pool.intersection(
             [self.full_register_of(x) for x in current_instruction.reg_reads()]
