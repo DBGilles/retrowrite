@@ -1,3 +1,4 @@
+This fork of RetroWrit contains some minor modifications needed for correctly implementing NemesisGuad
 # Retrowrite
 
 Code repository for "Retrowrite: Statically Instrumenting COTS Binaries for
